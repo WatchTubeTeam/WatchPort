@@ -55,7 +55,7 @@ public struct DisclosureGroup<Label: View, Content: View>: View {
     public var body: some View {
         VStack {
             _DisclosureGroup(
-                isExpanded: isExpanded ?? $privateIsExpanded,
+                isExpandedBinding: isExpanded ?? $privateIsExpanded,
                 content: content
             ) {
                 label
@@ -65,17 +65,20 @@ public struct DisclosureGroup<Label: View, Content: View>: View {
 }
 
 private struct _DisclosureGroup<Label: View, Content: View>: View {
-    @Binding var isExpanded: Bool
+    @Binding var isExpandedBinding: Bool
+    @State var isExpanded: Bool = false
     @State var isExpandedAnim: Bool = false
     @ViewBuilder var content: () -> Content
     @ViewBuilder var label: Label
 
     @State private var timer: Timer? = nil
     
+    var animTime = 0.3
+    
     @ViewBuilder
     var body: some View {
         Button {
-            toggle()
+            isExpanded.toggle()
         } label: {
             HStack {
                 label
@@ -84,7 +87,10 @@ private struct _DisclosureGroup<Label: View, Content: View>: View {
                     .rotationEffect(.degrees(isExpandedAnim ? 0 : 90))
             }
         }
-            .buttonStyle(.plain)
+        .buttonStyle(.plain)
+        .onChange(of: isExpandedBinding) { newValue in
+            setState(newValue)
+        }
         if isExpanded {
             content()
                 .opacity(isExpandedAnim ? 1 : 0)
@@ -92,12 +98,10 @@ private struct _DisclosureGroup<Label: View, Content: View>: View {
         }
     }
     
-    func toggle() {
-        let animTime = 0.3
-        
+    func setState(_ state: Bool) {
         if isExpanded {
             withAnimation(.easeInOut(duration: animTime)) {
-                isExpandedAnim.toggle()
+                isExpandedAnim = state
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.01, execute: {
                 withAnimation(.easeInOut(duration: animTime)) {
@@ -106,7 +110,7 @@ private struct _DisclosureGroup<Label: View, Content: View>: View {
             })
         } else {
             withAnimation(.easeInOut(duration: animTime)) {
-                isExpanded.toggle()
+                isExpanded = state
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.01, execute: {
                 withAnimation(.easeInOut(duration: animTime)) {
@@ -180,14 +184,25 @@ public extension DisclosureGroup where Label == Text {
 internal struct DisclosureGroupPreview: PreviewProvider {
     static var previews: some View {
         VStack {
-            DisclosureGroup {
-                List(0..<5) { i in
-                    Text("\(i)")
-                }
-            } label: {
-                Text("cool label")
-            }
-
+            demo()
         }
     }
 }
+
+internal struct demo: View {
+    @State var expand = false
+    
+    var body: some View {
+        DisclosureGroup(isExpanded: $expand) {
+            Text("Stuff")
+        } label: {
+            Text("Label")
+        }
+        .onAppear {
+            Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { _ in
+                expand.toggle()
+            }
+        }
+    }
+}
+
