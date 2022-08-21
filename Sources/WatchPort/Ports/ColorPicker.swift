@@ -60,10 +60,30 @@ public struct ColorPicker<Label: View>: View {
 
     }
     
+    @State var tab: String = "Sliders"
+    
     @ViewBuilder
     private var editSheet: some View {
-        TabView {
+        TabView(selection: $tab) {
+            editorGrid
+                .tag("Grid")
             editorSliders
+                .tag("Sliders")
+        }
+        .navigationTitle(tab)
+    }
+    
+    @ViewBuilder
+    private var editorGrid: some View {
+        ScrollView {
+            VStack {
+                Text("eta s0n")
+                
+                Button("Done") {
+                    editSheetShown.toggle()
+                }
+                .clipShape(Capsule())
+            }
         }
     }
     
@@ -76,13 +96,40 @@ public struct ColorPicker<Label: View>: View {
     private var editorSliders: some View {
         ScrollView {
             VStack(alignment: .leading) {
-                Slider(value: $r, in: 0...1)
-                    .tint(Color(cgColor: CGColor(red: r, green: 0, blue: 0, alpha: 1)))
+                Text("RED")
+                    .padding(.leading)
+                    .font(.footnote.bold())
+                Slider(value: $r.animation(.easeInOut), in: 0...1)
+                    .tint(.red)
+                Text("GREEN")
+                    .padding(.leading)
+                    .font(.footnote.bold())
+                Slider(value: $g.animation(.easeInOut), in: 0...1)
+                    .tint(.green)
+                Text("BLUE")
+                    .padding(.leading)
+                    .font(.footnote.bold())
+                Slider(value: $b.animation(.easeInOut), in: 0...1)
+                    .tint(.blue)
+                
+                Button("Done") {
+                    editSheetShown.toggle()
+                }
+                .buttonStyle(.plain)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background{
+                    Rectangle()
+                        .foregroundColor(Color(cgColor: CGColor(red: r, green: g, blue: b, alpha: a)))
+                }
+                .clipShape(Capsule())
             }
         }
         .onAppear {
             let color = UIColor(cgColor: selection)
             r = color.rgba.red
+            g = color.rgba.green
+            b = color.rgba.blue
         }
         .onDisappear {
             selection = CGColor(red: r, green: g, blue: b, alpha: a)
