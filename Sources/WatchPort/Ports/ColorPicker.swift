@@ -162,6 +162,113 @@ internal struct ColorPickerPreview: View {
 @available(watchOS 8.0, *)
 internal struct _ColorPickerPreview: PreviewProvider {
     static var previews: some View {
-        ColorPickerPreview()
+        sliderTest()
     }
 }
+
+@available(watchOS 8.0, *)
+struct sliderTest: View {
+    @State var r: CGFloat = 1
+    @State var g: CGFloat = 0.2
+    @State var b: CGFloat = 0.9
+    @State var a: CGFloat = 1
+    
+    var body: some View {
+        VStack {
+            ColorSlider(r: $r, g: $g, b: $b, a: $a, controls: .r)
+            ColorSlider(r: $r, g: $g, b: $b, a: $a, controls: .g)
+            ColorSlider(r: $r, g: $g, b: $b, a: $a, controls: .b)
+            ColorSlider(r: $r, g: $g, b: $b, a: $a, controls: .a)
+        }
+    }
+}
+
+@available(watchOS 8.0, *)
+public struct ColorSlider: View {
+    @State var width: CGFloat = 0
+    @State var offset: CGFloat = 0
+    @State var lastStoredOffset: CGFloat = 0
+    
+    @GestureState var gestureOffset: CGFloat = 0
+    
+    @Binding var r: CGFloat
+    @Binding var g: CGFloat
+    @Binding var b: CGFloat
+    @Binding var a: CGFloat
+    var controls: rgba
+    
+    public var body: some View {
+        ZStack {
+            GeometryReader { geo in
+                Capsule()
+                    .fill(
+                        LinearGradient(gradient: Gradient(colors: lineGradient), startPoint: .leading, endPoint: .trailing)
+                    )
+                    .onAppear {
+                        width = geo.size.width
+                    }
+            }
+            Circle()
+                .strokeBorder(.white, lineWidth: 2, antialiased: false)
+                .padding(2)
+                .offset(x: offset)
+                .gesture(
+                    DragGesture()
+                        .updating($gestureOffset,
+                                  body: { value, out, _ in
+                                      out = value.translation.width
+                                  }
+                                 )
+                        .onEnded(onEnd(value: ))
+                )
+                .onChange(of: gestureOffset) { newValue in
+                    onChange()
+                }
+            Text("\(offset)")
+        }
+        .frame(maxWidth: .infinity, maxHeight: 40)
+    }
+    
+    func onChange() {
+        let idk = width / 2.5
+        offset = (gestureOffset != 0) ? (gestureOffset + lastStoredOffset < idk ? gestureOffset + lastStoredOffset : offset) : (gestureOffset + lastStoredOffset > -idk ? gestureOffset + lastStoredOffset : offset)
+    }
+    
+    func onEnd(value: DragGesture.Value) {
+        lastStoredOffset = offset
+    }
+    
+    var lineGradient: [Color] {
+        switch controls {
+        case .r:
+            return [
+                Color(cgColor: CGColor(red: 0, green: g, blue: b, alpha: 1)),
+                Color(cgColor: CGColor(red: 1, green: g, blue: b, alpha: 1))
+            ]
+        case .g:
+            return [
+                Color(cgColor: CGColor(red: r, green: 0, blue: b, alpha: 1)),
+                Color(cgColor: CGColor(red: r, green: 1, blue: b, alpha: 1))
+            ]
+        case .b:
+            return [
+                Color(cgColor: CGColor(red: r, green: g, blue: 0, alpha: 1)),
+                Color(cgColor: CGColor(red: r, green: g, blue: 1, alpha: 1))
+            ]
+        case .a:
+            return [
+                Color(cgColor: CGColor(red: r, green: g, blue: b, alpha: 0)),
+                Color(cgColor: CGColor(red: r, green: g, blue: b, alpha: 1))
+            ]
+        }
+    }
+}
+
+enum rgba {
+    case r
+    case g
+    case b
+    case a
+}
+
+func getBounds() -> CGRect { return WKInterfaceDevice.current().screenBounds }
