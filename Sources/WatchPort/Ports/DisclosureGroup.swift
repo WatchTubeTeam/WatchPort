@@ -181,28 +181,17 @@ public extension DisclosureGroup where Label == Text {
     }
 }
 
-internal struct DisclosureGroupPreview: PreviewProvider {
-    static var previews: some View {
-        VStack {
-            demo()
-        }
-    }
-}
-
-internal struct demo: View {
-    @State var expand = false
-    
+internal struct DisclosureGroupPreview: View {
     var body: some View {
-        DisclosureGroup(isExpanded: $expand) {
-            Text("Stuff")
-        } label: {
-            Text("Label")
+        DisclosureGroup("Label") {
+            Text("Content")
         }
-        .onAppear {
-            Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { _ in
-                expand.toggle()
-            }
-        }
+        .foregroundColor(.blue)
     }
 }
 
+internal struct _DisclosureGroupPreview: PreviewProvider {
+    static var previews: some View {
+        DisclosureGroupPreview()
+    }
+}
