@@ -1,8 +1,7 @@
 import SwiftUI
 
-// MARK: - Disclosure Group
-
-public struct WPDisclosureGroup<Label: View, Content: View>: View {
+@available(watchOS 7.0, *)
+public struct DisclosureGroup<Label: View, Content: View>: View {
     @State private var privateIsExpanded: Bool = false
     var isExpanded: Binding<Bool>?
     @ViewBuilder var content: () -> Content
@@ -48,7 +47,7 @@ public struct WPDisclosureGroup<Label: View, Content: View>: View {
 
     public var body: some View {
         VStack {
-            _WPDisclosureGroup(
+            _DisclosureGroup(
                 isExpanded: isExpanded ?? $privateIsExpanded,
                 content: content
             ) {
@@ -58,8 +57,61 @@ public struct WPDisclosureGroup<Label: View, Content: View>: View {
     }
 }
 
+private struct _DisclosureGroup<Label: View, Content: View>: View {
+    @Binding var isExpanded: Bool
+    @State var isExpandedAnim: Bool = false
+    @ViewBuilder var content: () -> Content
+    @ViewBuilder var label: Label
 
-public extension WPDisclosureGroup where Label == Text {
+    @State private var timer: Timer? = nil
+    
+    @ViewBuilder
+    var body: some View {
+        Button {
+            toggle()
+        } label: {
+            HStack {
+                label
+                Spacer()
+                Image(systemName: "chevron.down")
+                    .rotationEffect(.degrees(isExpandedAnim ? 0 : 90))
+            }
+        }
+            .buttonStyle(.plain)
+        if isExpanded {
+            content()
+                .opacity(isExpandedAnim ? 1 : 0)
+                .offset(y: isExpandedAnim ? 0 : -20)
+        }
+    }
+    
+    func toggle() {
+        let animTime = 0.3
+        
+        if isExpanded {
+            withAnimation(.easeInOut(duration: animTime)) {
+                isExpandedAnim.toggle()
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.01, execute: {
+                withAnimation(.easeInOut(duration: animTime)) {
+                    isExpanded = isExpandedAnim
+                }
+            })
+        } else {
+            withAnimation(.easeInOut(duration: animTime)) {
+                isExpanded.toggle()
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.01, execute: {
+                withAnimation(.easeInOut(duration: animTime)) {
+                    isExpandedAnim = isExpanded
+                }
+            })
+        }
+    }
+}
+
+@available(watchOS 7.0, *)
+public extension DisclosureGroup where Label == Text {
 
     /// Creates a disclosure group, using a provided localized string key to
     /// create a text view for the label.
@@ -118,60 +170,15 @@ public extension WPDisclosureGroup where Label == Text {
     }
 }
 
-private struct _WPDisclosureGroup<Label: View, Content: View>: View {
-    @Binding var isExpanded: Bool
-    @State var isExpandedAnim: Bool = false
-    @ViewBuilder var content: () -> Content
-    @ViewBuilder var label: Label
-
-    @State private var timer: Timer? = nil
-    
-    @ViewBuilder
-    var body: some View {
-        Button {
-            toggle()
-        } label: { label }
-         
-        if isExpanded {
-            content()
-                .opacity(isExpandedAnim ? 1 : 0)
-                .offset(y: isExpandedAnim ? 0 : -20)
-        }
-    }
-    
-    func toggle() {
-        let animTime = 0.1
-        
-        if isExpanded {
-            withAnimation(.easeInOut(duration: animTime)) {
-                isExpandedAnim.toggle()
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.01, execute: {
-                withAnimation(.easeInOut(duration: animTime)) {
-                    isExpanded = isExpandedAnim
-                }
-            })
-        } else {
-            withAnimation(.easeInOut(duration: animTime)) {
-                isExpanded.toggle()
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.01, execute: {
-                withAnimation(.easeInOut(duration: animTime)) {
-                    isExpandedAnim = isExpanded
-                }
-            })
-        }
-    }
-}
-
-
 internal struct DisclosureGroupPreview: PreviewProvider {
     static var previews: some View {
-        ScrollView {
-            WPDisclosureGroup {
-                Text("Content")
+        VStack {
+            DisclosureGroup {
+                List(0..<5) { i in
+                    Text("\(i)")
+                }
             } label: {
-                Text("Label")
+                Text("cool label")
             }
 
         }
