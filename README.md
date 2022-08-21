@@ -1,3 +1,3 @@
 # WatchPort
 
-A description of this package.
+A package containing Views from other platforms ported to watchOS
