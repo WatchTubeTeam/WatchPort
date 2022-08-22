@@ -192,6 +192,8 @@ struct sliderTest: View {
 
 @available(watchOS 8.0, *)
 public struct ColorSlider: View {
+    static let sliderSize = 25.0
+
     @State var width: CGFloat = 0
     @State var lastStoredOffset: CGFloat = 0
 
@@ -205,7 +207,7 @@ public struct ColorSlider: View {
     var controls: rgba
     
     public var body: some View {
-        ZStack(alignment: .leading) {
+        ZStack {
             GeometryReader { geo in
                 Capsule()
                     .fill(
@@ -216,12 +218,12 @@ public struct ColorSlider: View {
                     }
             }
             Circle()
-                // idk here, this modifier breaks alignment, not sure how to fix
-                // .strokeBorder(dragging ? .gray : .white, lineWidth: 2, antialiased: false)
-                .padding(2)
+                .strokeBorder(dragging ? .gray : .white, lineWidth: 2, antialiased: false)
+                .frame(height: Self.sliderSize)
                 .offset(x: thumbOffset)
             Text("\(thumbValue)")
-                .frame(maxWidth: .infinity, maxHeight: 40, alignment: .center)
+                .font(.caption)
+                .frame(maxWidth: .infinity, alignment: .center)
         }
         .onAppear(perform: setInitialValue)
         // putting gesture here so you can drag on entire width, not just the thumb
@@ -273,15 +275,19 @@ public struct ColorSlider: View {
     }
 
     var thumbOffset: Double {
-        dragging ? lastStoredOffset + gestureOffset : lastStoredOffset
+        (dragging ? lastStoredOffset + gestureOffset : lastStoredOffset) + thumbLeadingOffset
+    }
+
+    var thumbLeadingOffset: Double {
+        -(width / 2) + (Self.sliderSize / 2)
     }
 
     var maxOffset: Double {
-        width - 30.0
+        width - Self.sliderSize
     }
 
     var thumbValue: Double {
-        thumbOffset / maxOffset
+        (thumbOffset - thumbLeadingOffset) / maxOffset
     }
 
     func onEnd(value: DragGesture.Value) {
