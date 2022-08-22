@@ -41,6 +41,9 @@ This criteria is just to make sure that writing UI with WatchPort is uncompromis
 | View | Ported |
 | ---- | --------- |
 | ColorPicker | ❌ |
+| ControlGroup | ❌ |
+| DatePicker | ❌ |
 | DisclosureGroup | ✅ |
+
 
 > More to come!
