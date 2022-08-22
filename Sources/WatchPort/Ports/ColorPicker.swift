@@ -168,9 +168,9 @@ internal struct _ColorPickerPreview: PreviewProvider {
 
 @available(watchOS 8.0, *)
 struct sliderTest: View {
-    @State var r: CGFloat = 1
-    @State var g: CGFloat = 0.2
-    @State var b: CGFloat = 0.9
+    @State var r: CGFloat = 0
+    @State var g: CGFloat = 0
+    @State var b: CGFloat = 0
     @State var a: CGFloat = 1
     
     var body: some View {
@@ -179,6 +179,11 @@ struct sliderTest: View {
             ColorSlider(r: $r, g: $g, b: $b, a: $a, controls: .g)
             ColorSlider(r: $r, g: $g, b: $b, a: $a, controls: .b)
             ColorSlider(r: $r, g: $g, b: $b, a: $a, controls: .a)
+
+            Rectangle()
+                .border(.white, width: 1)
+                .foregroundColor(Color(red: r, green: g, blue: b, opacity: a))
+                .frame(maxWidth: 50)
         }
     }
 }
@@ -186,9 +191,9 @@ struct sliderTest: View {
 @available(watchOS 8.0, *)
 public struct ColorSlider: View {
     @State var width: CGFloat = 0
-    @State var offset: CGFloat = 0
     @State var lastStoredOffset: CGFloat = 0
-    
+
+    @GestureState var dragging = false
     @GestureState var gestureOffset: CGFloat = 0
     
     @Binding var r: CGFloat
@@ -198,7 +203,7 @@ public struct ColorSlider: View {
     var controls: rgba
     
     public var body: some View {
-        ZStack {
+        ZStack(alignment: .leading) {
             GeometryReader { geo in
                 Capsule()
                     .fill(
@@ -209,51 +214,99 @@ public struct ColorSlider: View {
                     }
             }
             Circle()
-                .strokeBorder(.white, lineWidth: 2, antialiased: false)
+                // idk here, this modifier breaks alignment, not sure how to fix
+                // .strokeBorder(dragging ? .gray : .white, lineWidth: 2, antialiased: false)
                 .padding(2)
-                .offset(x: offset)
-                .gesture(
-                    DragGesture()
-                        .updating($gestureOffset,
-                                  body: { value, out, _ in
-                                      out = value.translation.width
-                                  }
-                                 )
-                        .onEnded(onEnd(value: ))
-                )
-                .onChange(of: gestureOffset) { newValue in
-                    onChange()
-                }
-            Text("\(offset)")
+                .offset(x: thumbOffset)
+            Text("\(thumbValue)")
+                .frame(maxWidth: .infinity, maxHeight: 40, alignment: .center)
         }
-        .frame(maxWidth: .infinity, maxHeight: 40)
+        .onAppear(perform: setInitialValue)
+        // putting gesture here so you can drag on entire width, not just the thumb
+        .gesture(
+            DragGesture()
+                .updating($gestureOffset) { value, out, _ in
+                    let offset = value.translation.width
+                    let newOffset = lastStoredOffset + offset
+
+                    // check if new offset does not go outside bounds of where you can drag
+                    guard newOffset >= 0, newOffset <= maxOffset else { return }
+
+                    // same for the value
+                    let newValue = newOffset / maxOffset
+                    guard (0.0...1.0).contains(newValue) else { return }
+
+                    out = offset
+                    updateControlledValue()
+                }
+                .updating($dragging) { _, state, _ in state = true }
+                .onEnded(onEnd(value: ))
+        )
     }
-    
-    func onChange() {
-        let idk = width / 2.5
-        offset = (gestureOffset != 0) ? (gestureOffset + lastStoredOffset < idk ? gestureOffset + lastStoredOffset : offset) : (gestureOffset + lastStoredOffset > -idk ? gestureOffset + lastStoredOffset : offset)
+
+    func setInitialValue() {
+        switch controls {
+        case .r:
+            lastStoredOffset = r * maxOffset
+        case .g:
+            lastStoredOffset = g * maxOffset
+        case .b:
+            lastStoredOffset = b * maxOffset
+        case .a:
+            lastStoredOffset = a * maxOffset
+        }
     }
-    
+
+    func updateControlledValue() {
+        switch controls {
+          case .r:
+              r = thumbValue
+          case .g:
+              g = thumbValue
+          case .b:
+              b = thumbValue
+          case .a:
+              a = thumbValue
+          }
+    }
+
+    var thumbOffset: Double {
+        dragging ? lastStoredOffset + gestureOffset : lastStoredOffset
+    }
+
+    var maxOffset: Double {
+        width - 30.0
+    }
+
+    var thumbValue: Double {
+        thumbOffset / maxOffset
+    }
+
     func onEnd(value: DragGesture.Value) {
-        lastStoredOffset = offset
+        var newOffset = lastStoredOffset + value.translation.width
+
+        newOffset = max(0, newOffset)
+        newOffset = min(maxOffset, newOffset)
+
+        lastStoredOffset = newOffset
     }
     
     var lineGradient: [Color] {
         switch controls {
         case .r:
             return [
-                Color(cgColor: CGColor(red: 0, green: g, blue: b, alpha: 1)),
-                Color(cgColor: CGColor(red: 1, green: g, blue: b, alpha: 1))
+                Color(cgColor: CGColor(red: 0, green: g, blue: b, alpha: a)),
+                Color(cgColor: CGColor(red: 1, green: g, blue: b, alpha: a))
             ]
         case .g:
             return [
-                Color(cgColor: CGColor(red: r, green: 0, blue: b, alpha: 1)),
-                Color(cgColor: CGColor(red: r, green: 1, blue: b, alpha: 1))
+                Color(cgColor: CGColor(red: r, green: 0, blue: b, alpha: a)),
+                Color(cgColor: CGColor(red: r, green: 1, blue: b, alpha: a))
             ]
         case .b:
             return [
-                Color(cgColor: CGColor(red: r, green: g, blue: 0, alpha: 1)),
-                Color(cgColor: CGColor(red: r, green: g, blue: 1, alpha: 1))
+                Color(cgColor: CGColor(red: r, green: g, blue: 0, alpha: a)),
+                Color(cgColor: CGColor(red: r, green: g, blue: 1, alpha: a))
             ]
         case .a:
             return [
