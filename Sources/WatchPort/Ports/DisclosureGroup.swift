@@ -184,10 +184,19 @@ public extension DisclosureGroup where Label == Text {
 
 internal struct DisclosureGroupPreview: View {
     var body: some View {
-        DisclosureGroup("Label") {
-            Text("Content")
+        ScrollView {
+            DisclosureGroup("Label") {
+                ForEach(0..<100) { i in
+                    Text(String(i))
+                        .frame(maxWidth: .infinity)
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .foregroundColor(Color(white: 0.8, opacity: 0.1))
+                )
+            }
         }
-        .foregroundColor(.blue)
     }
 }
 

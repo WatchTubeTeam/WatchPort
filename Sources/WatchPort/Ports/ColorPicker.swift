@@ -62,17 +62,17 @@ public struct ColorPicker<Label: View>: View {
 
     }
     
-    @State var tab: String = "Sliders"
+    @State var tab = false
     
     @ViewBuilder
     private var editSheet: some View {
         TabView(selection: $tab) {
             editorGrid
-                .tag("Grid")
+                .tag(true)
             editorSliders
-                .tag("Sliders")
+                .tag(false)
         }
-        .navigationTitle(tab)
+        .navigationTitle(tab ? "Grid" : "Sliders")
     }
     
     @ViewBuilder
@@ -81,10 +81,33 @@ public struct ColorPicker<Label: View>: View {
             VStack {
                 Text("eta s0n")
                 
-                Button("Done") {
-                    editSheetShown.toggle()
+                HStack {
+                    Button {
+                        withAnimation(.easeInOut) {
+                            tab.toggle()
+                        }
+                    } label: {
+                        let size: CGFloat = 25
+                        Circle()
+                            .strokeBorder(
+                                AngularGradient(gradient: Gradient(colors: [.red, .purple, .blue, .green, .yellow, .red]), center: .center, startAngle: .zero, endAngle: .degrees(360)),
+                                lineWidth: 3
+                            )
+                            .overlay(content: {
+                                Circle()
+                                    .strokeBorder(.black, lineWidth: 1)
+                                    .background(Circle().fill(Color(cgColor: CGColor(red: r, green: g, blue: b, alpha: a))))
+                                    .padding(4)
+                            })
+                            .frame(maxWidth: size, maxHeight: size)
+                    }
+                    .buttonStyle(.plain)
+                    
+                    Button("Done") {
+                        editSheetShown.toggle()
+                    }
+                    .clipShape(Capsule())
                 }
-                .clipShape(Capsule())
             }
         }
     }
@@ -101,30 +124,50 @@ public struct ColorPicker<Label: View>: View {
                 Text("RED")
                     .padding(.leading)
                     .font(.footnote.bold())
-                Slider(value: $r.animation(.easeInOut), in: 0...1)
-                    .tint(.red)
+                ColorSlider(r: $r, g: $g, b: $b, a: $a, controls: .r)
                 Text("GREEN")
                     .padding(.leading)
                     .font(.footnote.bold())
-                Slider(value: $g.animation(.easeInOut), in: 0...1)
-                    .tint(.green)
+                ColorSlider(r: $r, g: $g, b: $b, a: $a, controls: .g)
                 Text("BLUE")
                     .padding(.leading)
                     .font(.footnote.bold())
-                Slider(value: $b.animation(.easeInOut), in: 0...1)
-                    .tint(.blue)
+                ColorSlider(r: $r, g: $g, b: $b, a: $a, controls: .b)
                 
-                Button("Done") {
-                    editSheetShown.toggle()
+                if supportsOpacity {
+                    Text("ALPHA")
+                        .padding(.leading)
+                        .font(.footnote.bold())
+                    ColorSlider(r: $r, g: $g, b: $b, a: $a, controls: .a)
                 }
-                .buttonStyle(.plain)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background{
-                    Rectangle()
-                        .foregroundColor(Color(cgColor: CGColor(red: r, green: g, blue: b, alpha: a)))
+                
+                HStack {
+                    Button {
+                        withAnimation(.easeInOut) {
+                            tab.toggle()
+                        }
+                    } label: {
+                        let size: CGFloat = 25
+                        Circle()
+                            .strokeBorder(
+                                AngularGradient(gradient: Gradient(colors: [.red, .purple, .blue, .green, .yellow, .red]), center: .center, startAngle: .zero, endAngle: .degrees(360)),
+                                lineWidth: 3
+                            )
+                            .overlay(content: {
+                                Circle()
+                                    .strokeBorder(.black, lineWidth: 1)
+                                    .background(Circle().fill(Color(cgColor: CGColor(red: r, green: g, blue: b, alpha: a))))
+                                    .padding(4)
+                            })
+                            .frame(maxWidth: size, maxHeight: size)
+                    }
+                    .buttonStyle(.plain)
+                    
+                    Button("Done") {
+                        editSheetShown.toggle()
+                    }
+                    .clipShape(Capsule())
                 }
-                .clipShape(Capsule())
             }
         }
         .onAppear {
@@ -132,6 +175,7 @@ public struct ColorPicker<Label: View>: View {
             r = color.rgba.red
             g = color.rgba.green
             b = color.rgba.blue
+            a = color.rgba.alpha
         }
         .onDisappear {
             selection = CGColor(red: r, green: g, blue: b, alpha: a)
@@ -146,7 +190,6 @@ fileprivate extension UIColor {
         var blue: CGFloat = 0
         var alpha: CGFloat = 0
         getRed(&red, green: &green, blue: &blue, alpha: &alpha)
-
         return (red, green, blue, alpha)
     }
 }
@@ -164,7 +207,7 @@ internal struct ColorPickerPreview: View {
 @available(watchOS 8.0, *)
 internal struct _ColorPickerPreview: PreviewProvider {
     static var previews: some View {
-        sliderTest()
+        ColorPickerPreview()
     }
 }
 
@@ -176,7 +219,7 @@ struct sliderTest: View {
     @State var a: CGFloat = 1
     
     var body: some View {
-        VStack {
+        ScrollView {
             ColorSlider(r: $r, g: $g, b: $b, a: $a, controls: .r)
             ColorSlider(r: $r, g: $g, b: $b, a: $a, controls: .g)
             ColorSlider(r: $r, g: $g, b: $b, a: $a, controls: .b)
@@ -297,6 +340,8 @@ public struct ColorSlider: View {
         newOffset = min(maxOffset, newOffset)
 
         lastStoredOffset = newOffset
+        
+        updateControlledValue()
     }
     
     var lineGradient: [Color] {
