@@ -3,10 +3,12 @@
 //  WatchPort
 //
 //  Created by Lakhan Lothiyi on 21/08/2022.
+//  Co-authored by Arkadiusz Fal
 //
 
 import SwiftUI
 
+#if os(watchOS)
 @available(watchOS 8.0, *)
 public struct ColorPicker<Label: View>: View {
     
@@ -325,3 +327,4 @@ enum rgba {
 }
 
 func getBounds() -> CGRect { return WKInterfaceDevice.current().screenBounds }
+#endif

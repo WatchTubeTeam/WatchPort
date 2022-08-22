@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-#if watchOS
+#if os(watchOS)
 @available(watchOS 7.0, *)
 public struct DisclosureGroup<Label: View, Content: View>: View {
     @State private var privateIsExpanded: Bool = false
