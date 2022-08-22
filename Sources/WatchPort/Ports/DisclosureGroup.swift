@@ -79,7 +79,7 @@ private struct _DisclosureGroup<Label: View, Content: View>: View {
     @ViewBuilder
     var body: some View {
         Button {
-            isExpanded.toggle()
+            isExpandedBinding.toggle()
         } label: {
             HStack {
                 label
