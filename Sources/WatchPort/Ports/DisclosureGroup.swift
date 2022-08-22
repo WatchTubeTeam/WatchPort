@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+#if watchOS
 @available(watchOS 7.0, *)
 public struct DisclosureGroup<Label: View, Content: View>: View {
     @State private var privateIsExpanded: Bool = false
@@ -195,3 +196,4 @@ internal struct _DisclosureGroupPreview: PreviewProvider {
         DisclosureGroupPreview()
     }
 }
+#endif
