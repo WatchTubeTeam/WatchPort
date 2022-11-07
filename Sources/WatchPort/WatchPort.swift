@@ -6,7 +6,3 @@
 //
 
 import Foundation
-
-public struct WatchPort {
-    public init() {}
-}
